@@ -31,17 +31,17 @@ app.use(express.static(path.join(__dirname, "public")));
 // connect database
 connectDB();
 
-app.use("/user", userRoutes);
-app.use("/category", categoryRoutes);
-app.use("/brand", brandRoutes);
-app.use("/product", productRoutes);
+app.use("/api/user", userRoutes);
+app.use("/api/category", categoryRoutes);
+app.use("/api/brand", brandRoutes);
+app.use("/api/product", productRoutes);
 // app.use('/api/upload',uploadRouter);
-app.use("/order", orderRoutes);
-app.use("/user-order", userOrderRoutes);
-app.use("/review", reviewRoutes);
-app.use("/cloudinary", cloudinaryRoutes);
-app.use("/admin", adminRoutes);
-app.use("/download", downloadRoutes);
+app.use("/api/order", orderRoutes);
+app.use("/api/user-order", userOrderRoutes);
+app.use("/api/review", reviewRoutes);
+app.use("/api/cloudinary", cloudinaryRoutes);
+app.use("/api/admin", adminRoutes);
+app.use("/api/download", downloadRoutes);
 
 // root route
 app.get("/", (req, res) => res.send("Apps worked successfully"));

@@ -43,9 +43,6 @@ app.use("/api/cloudinary", cloudinaryRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/download", downloadRoutes);
 
-// root route
-app.get("/", (req, res) => res.send("Apps worked successfully"));
-
 app.listen(PORT, () => console.log(`server running on port ${PORT}`));
 
 // global error handler

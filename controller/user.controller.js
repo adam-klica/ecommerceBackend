@@ -6,6 +6,97 @@ const { sendEmail } = require("../config/email");
 const { generateToken, tokenForVerify } = require("../utils/token");
 const { secret } = require("../config/secret");
 
+/**
+ * @route   POST /api/v1/users/register
+ * @desc    Register a new user with role (buyer or profesor)
+ * @access  Public
+ */
+exports.registerWithRole = async (req, res, next) => {
+  try {
+    const {
+      name,
+      email,
+      password,
+      role = "buyer",
+      phone = "123",
+      address = "Default",
+    } = req.body;
+
+    // Validate required fields
+    if (!name || !email || !password) {
+      return res.status(400).json({
+        status: "fail",
+        message: "Name, email, and password are required",
+      });
+    }
+
+    // Validate email format
+    if (!validator.isEmail(email)) {
+      return res.status(400).json({
+        status: "fail",
+        message: "Please provide a valid email address",
+      });
+    }
+
+    // Validate role
+    const validRoles = ["buyer", "profesor"];
+    const userRole = role.toLowerCase();
+    if (!validRoles.includes(userRole)) {
+      return res.status(400).json({
+        status: "fail",
+        message: "Invalid role. Must be either 'buyer' or 'profesor'",
+      });
+    }
+
+    // Check if user already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(409).json({
+        status: "fail",
+        message: "Email already exists",
+      });
+    }
+
+    // Create new user
+    const newUser = new User({
+      name,
+      email,
+      password,
+      role: userRole,
+      phone: phone || undefined,
+      address: address || undefined,
+      status: "active", // or "inactive" if email verification is required
+    });
+
+    // Hash password and save user
+    await newUser.save();
+
+    // Generate JWT token
+    const token = generateToken(newUser);
+
+    // Prepare user data for response (exclude sensitive data)
+    const userData = {
+      _id: newUser._id,
+      name: newUser.name,
+      email: newUser.email,
+      role: newUser.role,
+      phone: newUser.phone,
+      address: newUser.address,
+    };
+
+    res.status(201).json({
+      status: "success",
+      message: "User registered successfully",
+      data: {
+        user: userData,
+        token,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // register user
 // sign up
 exports.signup = async (req, res, next) => {

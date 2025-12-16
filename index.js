@@ -18,7 +18,7 @@ const productRoutes = require("./routes/product.routes");
 const orderRoutes = require("./routes/order.routes");
 const reviewRoutes = require("./routes/review.routes");
 const adminRoutes = require("./routes/admin.routes");
-// const uploadRouter = require('./routes/uploadFile.route');
+const uploadRoutes = require("./routes/uploadFile.routes");
 const cloudinaryRoutes = require("./routes/cloudinary.routes");
 
 // middleware
@@ -39,6 +39,7 @@ app.use("/api/order", orderRoutes);
 app.use("/api/user-order", userOrderRoutes);
 app.use("/api/review", reviewRoutes);
 app.use("/api/cloudinary", cloudinaryRoutes);
+app.use("/api/upload", uploadRoutes);
 app.use("/api/admin", adminRoutes);
 
 app.listen(PORT, () => console.log(`server running on port ${PORT}`));

@@ -20,9 +20,6 @@ const userData = require("./utils/users");
 const Reviews = require("./model/Review");
 const reviewsData = require("./utils/reviews");
 
-const Admin = require("./model/Admin");
-const adminData = require("./utils/admin");
-
 connectDB();
 const importData = async () => {
   try {
@@ -43,9 +40,6 @@ const importData = async () => {
 
     await Reviews.deleteMany();
     await Reviews.insertMany(reviewsData);
-
-    await Admin.deleteMany();
-    await Admin.insertMany(adminData);
 
     console.log("data inserted successfully!");
     process.exit();

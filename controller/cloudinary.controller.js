@@ -2,8 +2,7 @@ const fs = require("fs");
 const { cloudinaryServices } = require("../services/cloudinary.service");
 
 // add image
-const saveImageCloudinary = async (req, res,next) => {
- 
+const saveImageCloudinary = async (req, res, next) => {
   try {
     const result = await cloudinaryServices.cloudinaryImageUpload(
       req.file.buffer
@@ -11,11 +10,11 @@ const saveImageCloudinary = async (req, res,next) => {
     res.status(200).json({
       success: true,
       message: "image uploaded successfully",
-      data:{url:result.secure_url,id:result.public_id},
+      data: { url: result.secure_url, id: result.public_id },
     });
   } catch (err) {
     console.log(err);
-    next(err)
+    next(err);
   }
 };
 
@@ -79,41 +78,8 @@ const cloudinaryDeleteController = async (req, res) => {
   }
 };
 
-// upload digital file (for digital products)
-const uploadDigitalFile = async (req, res, next) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({
-        success: false,
-        message: "No file provided",
-      });
-    }
-
-    const result = await cloudinaryServices.cloudinaryFileUpload(
-      req.file.buffer,
-      req.file.originalname,
-      'raw' // Use 'raw' for non-image files
-    );
-
-    res.status(200).json({
-      success: true,
-      message: "Digital file uploaded successfully",
-      data: {
-        url: result.secure_url,
-        publicId: result.public_id,
-        fileName: req.file.originalname,
-        fileSize: req.file.size,
-      },
-    });
-  } catch (err) {
-    console.log(err);
-    next(err);
-  }
-};
-
 exports.cloudinaryController = {
   cloudinaryDeleteController,
   saveImageCloudinary,
   addMultipleImageCloudinary,
-  uploadDigitalFile,
 };

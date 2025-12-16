@@ -4,25 +4,28 @@ const utc = require("dayjs/plugin/utc");
 dayjs.extend(utc);
 const jwt = require("jsonwebtoken");
 const { tokenForVerify } = require("../config/auth");
-const Admin = require("../model/Admin");
+const User = require("../model/User");
 const { generateToken } = require("../utils/token");
 const { sendEmail } = require("../config/email");
 const { secret } = require("../config/secret");
 
 // register
-const registerAdmin = async (req, res, next) => {
+const registerUser = async (req, res, next) => {
   try {
-    const isAdded = await Admin.findOne({ email: req.body.email });
+    const isAdded = await User.findOne({ email: req.body.email });
     if (isAdded) {
       return res.status(403).send({
         message: "This Email already Added!",
       });
     } else {
-      const newStaff = new Admin({
+      const newStaff = new User({
         name: req.body.name,
         email: req.body.email,
-        role: req.body.role,
+        role: req.body.role || "profesor",
         password: bcrypt.hashSync(req.body.password),
+        phone: req.body.phone,
+        address: req.body.address,
+        status: "active",
       });
       const staff = await newStaff.save();
       const token = generateToken(staff);
@@ -40,9 +43,9 @@ const registerAdmin = async (req, res, next) => {
   }
 };
 // login admin
-const loginAdmin = async (req, res, next) => {
+const loginUser = async (req, res, next) => {
   try {
-    const admin = await Admin.findOne({ email: req.body.email });
+    const admin = await User.findOne({ email: req.body.email });
 
     if (admin && bcrypt.compareSync(req.body.password, admin.password)) {
       const token = generateToken(admin);
@@ -52,7 +55,7 @@ const loginAdmin = async (req, res, next) => {
         name: admin.name,
         phone: admin.phone,
         email: admin.email,
-        image: admin.image,
+        image: admin.imageURL,
         role: admin.role,
       });
     } else {
@@ -69,10 +72,10 @@ const forgetPassword = async (req, res, next) => {
   try {
     const { email } = req.body;
 
-    const admin = await Admin.findOne({ email: email });
+    const admin = await User.findOne({ email: email });
     if (!admin) {
       return res.status(404).send({
-        message: "Admin Not found with this email!",
+        message: "User Not found with this email!",
       });
     } else {
       const token = tokenForVerify(admin);
@@ -106,10 +109,10 @@ const forgetPassword = async (req, res, next) => {
   }
 };
 // confirm-forget-password
-const confirmAdminForgetPass = async (req, res, next) => {
+const confirmUserForgetPass = async (req, res, next) => {
   try {
     const { token, password } = req.body;
-    const admin = await Admin.findOne({ confirmationToken: token });
+    const admin = await User.findOne({ confirmationToken: token });
 
     if (!admin) {
       return res.status(403).json({
@@ -127,7 +130,7 @@ const confirmAdminForgetPass = async (req, res, next) => {
       });
     } else {
       const newPassword = bcrypt.hashSync(password);
-      await Admin.updateOne(
+      await User.updateOne(
         { confirmationToken: token },
         { $set: { password: newPassword } }
       );
@@ -150,16 +153,16 @@ const confirmAdminForgetPass = async (req, res, next) => {
 const changePassword = async (req, res, next) => {
   try {
     const { email, oldPass, newPass } = req.body || {};
-    const admin = await Admin.findOne({ email: email });
+    const admin = await User.findOne({ email: email });
     // Check if the admin exists
     if (!admin) {
-      return res.status(404).json({ message: "Admin not found" });
+      return res.status(404).json({ message: "User not found" });
     }
     if (!bcrypt.compareSync(oldPass, admin.password)) {
       return res.status(401).json({ message: "Incorrect current password" });
     } else {
       const hashedPassword = bcrypt.hashSync(newPass);
-      await Admin.updateOne({ email: email }, { password: hashedPassword });
+      await User.updateOne({ email: email }, { password: hashedPassword });
       res.status(200).json({ message: "Password changed successfully" });
     }
   } catch (error) {
@@ -170,7 +173,7 @@ const changePassword = async (req, res, next) => {
 const resetPassword = async (req, res) => {
   const token = req.body.token;
   const { email } = jwt.decode(token);
-  const staff = await Admin.findOne({ email: email });
+  const staff = await User.findOne({ email: email });
 
   if (token) {
     jwt.verify(token, secret.jwt_secret_for_verify, (err, decoded) => {
@@ -191,13 +194,13 @@ const resetPassword = async (req, res) => {
 // add staff
 const addStaff = async (req, res, next) => {
   try {
-    const isAdded = await Admin.findOne({ email: req.body.email });
+    const isAdded = await User.findOne({ email: req.body.email });
     if (isAdded) {
       return res.status(500).send({
         message: "This Email already Added!",
       });
     } else {
-      const newStaff = new Admin({
+      const newStaff = new User({
         name: req.body.name,
         email: req.body.email,
         password: bcrypt.hashSync(req.body.password),
@@ -218,7 +221,7 @@ const addStaff = async (req, res, next) => {
 // get all staff
 const getAllStaff = async (req, res, next) => {
   try {
-    const admins = await Admin.find({}).sort({ _id: -1 });
+    const admins = await User.find({}).sort({ _id: -1 });
     res.status(200).json({
       status: true,
       message: "Staff get successfully",
@@ -231,7 +234,7 @@ const getAllStaff = async (req, res, next) => {
 // getStaffById
 const getStaffById = async (req, res, next) => {
   try {
-    const admin = await Admin.findById(req.params.id);
+    const admin = await User.findById(req.params.id);
     res.send(admin);
   } catch (err) {
     next(err);
@@ -240,7 +243,7 @@ const getStaffById = async (req, res, next) => {
 // updateStaff
 const updateStaff = async (req, res) => {
   try {
-    const admin = await Admin.findOne({ _id: req.params.id });
+    const admin = await User.findOne({ _id: req.params.id });
     if (admin) {
       admin.name = req.body.name;
       admin.email = req.body.email;
@@ -252,16 +255,16 @@ const updateStaff = async (req, res) => {
         req.body.password !== undefined
           ? bcrypt.hashSync(req.body.password)
           : admin.password;
-      const updatedAdmin = await admin.save();
-      const token = generateToken(updatedAdmin);
+      const updatedUser = await admin.save();
+      const token = generateToken(updatedUser);
       res.send({
         token,
-        _id: updatedAdmin._id,
-        name: updatedAdmin.name,
-        email: updatedAdmin.email,
-        role: updatedAdmin.role,
-        image: updatedAdmin.image,
-        phone: updatedAdmin.phone,
+        _id: updatedUser._id,
+        name: updatedUser.name,
+        email: updatedUser.email,
+        role: updatedUser.role,
+        image: updatedUser.image,
+        phone: updatedUser.phone,
       });
     } else {
       res.status(404).send({
@@ -277,9 +280,9 @@ const updateStaff = async (req, res) => {
 // deleteStaff
 const deleteStaff = async (req, res, next) => {
   try {
-    await Admin.findByIdAndDelete(req.params.id);
+    await User.findByIdAndDelete(req.params.id);
     res.status(200).json({
-      message: "Admin Deleted Successfully",
+      message: "User Deleted Successfully",
     });
   } catch (err) {
     next(err);
@@ -290,7 +293,7 @@ const updatedStatus = async (req, res) => {
   try {
     const newStatus = req.body.status;
 
-    await Admin.updateOne(
+    await User.updateOne(
       { _id: req.params.id },
       {
         $set: {
@@ -427,8 +430,8 @@ const createUser = async (req, res, next) => {
 };
 
 module.exports = {
-  registerAdmin,
-  loginAdmin,
+  registerAdmin: registerUser,
+  loginAdmin: loginUser,
   forgetPassword,
   resetPassword,
   addStaff,
@@ -438,7 +441,7 @@ module.exports = {
   deleteStaff,
   updatedStatus,
   changePassword,
-  confirmAdminForgetPass,
+  confirmAdminForgetPass: confirmUserForgetPass,
   getAllUsers,
   getUserById,
   deleteUser,

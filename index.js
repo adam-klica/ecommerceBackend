@@ -26,6 +26,8 @@ app.use(cors());
 app.use(express.json());
 app.use(morgan("dev"));
 app.use(express.static(path.join(__dirname, "public")));
+// Serve uploaded images at /api/uploads
+app.use("/api/uploads", express.static(path.join(__dirname, "public/images")));
 
 // connect database
 connectDB();

@@ -11,7 +11,7 @@ exports.fileUpload = async (req, res, next) => {
     const baseUrl =
       process.env.API_BASE_URL ||
       `http://localhost:${process.env.PORT || 7000}`;
-    const imageUrl = `${baseUrl}/images/${req.file.filename}`;
+    const imageUrl = `${baseUrl}/api/uploads/${req.file.filename}`;
 
     res.status(200).json({
       success: true,

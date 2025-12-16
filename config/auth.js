@@ -1,6 +1,6 @@
 require("dotenv").config();
 const jwt = require("jsonwebtoken");
-const Admin = require("../model/Admin");
+const User = require("../model/User");
 const { secret } = require("./secret");
 
 const signInToken = (user) => {
@@ -11,7 +11,7 @@ const signInToken = (user) => {
       email: user.email,
       address: user.address,
       phone: user.phone,
-      image: user.image,
+      image: user.imageURL,
     },
     secret.token_secret,
     {
@@ -48,7 +48,7 @@ const isAuth = async (req, res, next) => {
 };
 
 const isAdmin = async (req, res, next) => {
-  const admin = await Admin.findOne({ role: "Admin" });
+  const admin = await User.findOne({ role: "admin" });
   if (admin) {
     next();
   } else {

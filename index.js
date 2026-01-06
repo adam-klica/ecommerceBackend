@@ -20,6 +20,7 @@ const reviewRoutes = require("./routes/review.routes");
 const adminRoutes = require("./routes/admin.routes");
 const uploadRoutes = require("./routes/uploadFile.routes");
 const cloudinaryRoutes = require("./routes/cloudinary.routes");
+const newsRoutes = require("./routes/news.routes");
 
 // middleware
 app.use(cors());
@@ -40,6 +41,7 @@ app.use("/api/product", productRoutes);
 app.use("/api/order", orderRoutes);
 app.use("/api/user-order", userOrderRoutes);
 app.use("/api/review", reviewRoutes);
+app.use("/api/news", newsRoutes);
 app.use("/api/cloudinary", cloudinaryRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/admin", adminRoutes);

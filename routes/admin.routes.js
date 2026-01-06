@@ -2,6 +2,8 @@ const express = require("express");
 const router = express.Router();
 const verifyAdminToken = require("../middleware/verifyAdminToken");
 const checkAdminAccess = require("../middleware/checkAdminAccess");
+const uploader = require("../middleware/uploder");
+const newsController = require("../controller/news.controller");
 const {
   registerAdmin,
   loginAdmin,
@@ -72,6 +74,34 @@ router.get(
   verifyAdminToken,
   checkAdminAccess,
   getCustomerReports
+);
+
+// News/Blog management (admin only)
+router.get(
+  "/news",
+  verifyAdminToken,
+  checkAdminAccess,
+  newsController.getAdminNewsList
+);
+router.post(
+  "/news",
+  verifyAdminToken,
+  checkAdminAccess,
+  uploader.single("image"),
+  newsController.createNews
+);
+router.patch(
+  "/news/:id",
+  verifyAdminToken,
+  checkAdminAccess,
+  uploader.single("image"),
+  newsController.updateNews
+);
+router.delete(
+  "/news/:id",
+  verifyAdminToken,
+  checkAdminAccess,
+  newsController.deleteNews
 );
 
 module.exports = router;

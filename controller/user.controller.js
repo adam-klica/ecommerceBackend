@@ -8,7 +8,7 @@ const { secret } = require("../config/secret");
 
 /**
  * @route   POST /api/v1/users/register
- * @desc    Register a new user with role (buyer, profesor, or admin)
+ * @desc    Register a new user with role (buyer, seller, or admin)
  * @access  Public
  */
 exports.registerWithRole = async (req, res, next) => {
@@ -39,12 +39,12 @@ exports.registerWithRole = async (req, res, next) => {
     }
 
     // Validate role
-    const validRoles = ["buyer", "profesor", "admin"];
+    const validRoles = ["buyer", "seller", "admin"];
     const userRole = role.toLowerCase();
     if (!validRoles.includes(userRole)) {
       return res.status(400).json({
         status: "fail",
-        message: "Invalid role. Must be either 'buyer', 'profesor', or 'admin'",
+        message: "Invalid role. Must be either 'buyer', 'seller', or 'admin'",
       });
     }
 

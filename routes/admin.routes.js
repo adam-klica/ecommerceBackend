@@ -18,6 +18,7 @@ const {
   getUserById,
   deleteUser,
   createUser,
+  updateUserById,
 } = require("../controller/admin.controller");
 
 //register a staff
@@ -54,12 +55,14 @@ router.patch("/update-stuff/:id", updateStaff);
 router.delete("/staff/:id", deleteStaff);
 
 // User management endpoints (admin only)
-// Create user (buyer or profesor)
+// Create user (buyer or seller)
 router.post("/users/create", verifyAdminToken, checkAdminAccess, createUser);
 // Get all users (must come before /users/:id)
 router.get("/users/all", verifyAdminToken, checkAdminAccess, getAllUsers);
 // Get user by ID
 router.get("/users/:id", verifyAdminToken, checkAdminAccess, getUserById);
+// Update user by ID
+router.patch("/users/:id", verifyAdminToken, checkAdminAccess, updateUserById);
 // Delete user
 router.delete("/users/:id", verifyAdminToken, checkAdminAccess, deleteUser);
 

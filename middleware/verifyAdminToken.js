@@ -5,7 +5,7 @@ const User = require("../model/User");
 
 /**
  * Verify token and attach user info to request
- * Works with User tokens for all roles (buyer, profesor, admin)
+ * Works with User tokens for all roles (buyer, seller, admin)
  */
 module.exports = async (req, res, next) => {
   try {
@@ -33,7 +33,7 @@ module.exports = async (req, res, next) => {
     // Find user in User collection
     const user = await User.findById(userId);
     if (user) {
-      // Attach user info for both regular users and admin/profesor roles
+      // Attach user info for both regular users and admin/seller roles
       req.user = {
         id: user._id,
         email: user.email,
@@ -41,8 +41,8 @@ module.exports = async (req, res, next) => {
         name: user.name,
       };
 
-      // For backward compatibility, also attach as admin if user has admin/profesor role
-      if (user.role === "admin" || user.role === "profesor") {
+      // For backward compatibility, also attach as admin if user has admin/seller role
+      if (user.role === "admin" || user.role === "seller") {
         req.admin = {
           id: user._id,
           email: user.email,

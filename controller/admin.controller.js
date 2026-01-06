@@ -3,6 +3,7 @@ const dayjs = require("dayjs");
 const utc = require("dayjs/plugin/utc");
 dayjs.extend(utc);
 const jwt = require("jsonwebtoken");
+const validator = require("validator");
 const { tokenForVerify } = require("../config/auth");
 const User = require("../model/User");
 const { generateToken } = require("../utils/token");
@@ -21,7 +22,7 @@ const registerUser = async (req, res, next) => {
       const newStaff = new User({
         name: req.body.name,
         email: req.body.email,
-        role: req.body.role || "profesor",
+        role: req.body.role || "seller",
         password: bcrypt.hashSync(req.body.password),
         phone: req.body.phone,
         address: req.body.address,
@@ -38,6 +39,81 @@ const registerUser = async (req, res, next) => {
         joiningData: Date.now(),
       });
     }
+  } catch (err) {
+    next(err);
+  }
+};
+
+// Update user (for admin) - email/phone/role
+const updateUserById = async (req, res, next) => {
+  try {
+    const User = require("../model/User");
+    const { email, phone, role } = req.body || {};
+
+    const validRoles = ["buyer", "seller", "admin"];
+
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({
+        status: false,
+        message: "User not found",
+      });
+    }
+
+    // Normalize legacy/invalid stored roles so Mongoose validation doesn't block updates
+    const currentRole = String(user.role || "buyer").toLowerCase();
+    if (!validRoles.includes(currentRole)) {
+      user.role = "buyer";
+    }
+
+    if (email !== undefined) {
+      const normalizedEmail = String(email).toLowerCase().trim();
+      if (!validator.isEmail(normalizedEmail)) {
+        return res.status(400).json({
+          status: false,
+          message: "Please provide a valid email address",
+        });
+      }
+
+      if (normalizedEmail !== user.email) {
+        const existingUser = await User.findOne({ email: normalizedEmail });
+        if (
+          existingUser &&
+          existingUser._id.toString() !== user._id.toString()
+        ) {
+          return res.status(409).json({
+            status: false,
+            message: "User with this email already exists",
+          });
+        }
+      }
+
+      user.email = normalizedEmail;
+    }
+
+    if (phone !== undefined) {
+      user.phone = phone || undefined;
+    }
+
+    if (role !== undefined) {
+      const userRole = String(role).toLowerCase();
+      if (!validRoles.includes(userRole)) {
+        return res.status(400).json({
+          status: false,
+          message: "Role must be 'buyer', 'seller', or 'admin'",
+        });
+      }
+      user.role = userRole;
+    }
+
+    const savedUser = await user.save();
+    const { password, ...safeUser } = savedUser.toObject();
+
+    res.status(200).json({
+      status: true,
+      message: "User updated successfully",
+      data: safeUser,
+    });
   } catch (err) {
     next(err);
   }
@@ -315,11 +391,20 @@ const updatedStatus = async (req, res) => {
 const getAllUsers = async (req, res, next) => {
   try {
     const User = require("../model/User");
+    const validRoles = ["buyer", "seller", "admin"];
     const users = await User.find({}).select("-password").sort({ _id: -1 });
+    const normalizedUsers = users.map((u) => {
+      const obj = u.toObject();
+      const role = String(obj.role || "buyer").toLowerCase();
+      return {
+        ...obj,
+        role: validRoles.includes(role) ? role : "buyer",
+      };
+    });
     res.status(200).json({
       status: true,
       message: "Users retrieved successfully",
-      data: users,
+      data: normalizedUsers,
     });
   } catch (err) {
     next(err);
@@ -330,6 +415,7 @@ const getAllUsers = async (req, res, next) => {
 const getUserById = async (req, res, next) => {
   try {
     const User = require("../model/User");
+    const validRoles = ["buyer", "seller", "admin"];
     const user = await User.findById(req.params.id).select("-password");
     if (!user) {
       return res.status(404).json({
@@ -337,10 +423,15 @@ const getUserById = async (req, res, next) => {
         message: "User not found",
       });
     }
+    const userObj = user.toObject();
+    const role = String(userObj.role || "buyer").toLowerCase();
     res.status(200).json({
       status: true,
       message: "User retrieved successfully",
-      data: user,
+      data: {
+        ...userObj,
+        role: validRoles.includes(role) ? role : "buyer",
+      },
     });
   } catch (err) {
     next(err);
@@ -367,7 +458,7 @@ const deleteUser = async (req, res, next) => {
   }
 };
 
-// Create user (for admin - can create buyers, professors, and admins)
+// Create user (for admin - can create buyers, sellers, and admins)
 const createUser = async (req, res, next) => {
   try {
     const User = require("../model/User");
@@ -382,12 +473,12 @@ const createUser = async (req, res, next) => {
     }
 
     // Validate role
-    const validRoles = ["buyer", "profesor", "admin"];
+    const validRoles = ["buyer", "seller", "admin"];
     const userRole = role?.toLowerCase() || "buyer";
     if (!validRoles.includes(userRole)) {
       return res.status(400).json({
         status: false,
-        message: "Role must be 'buyer', 'profesor', or 'admin'",
+        message: "Role must be 'buyer', 'seller', or 'admin'",
       });
     }
 
@@ -446,4 +537,5 @@ module.exports = {
   getUserById,
   deleteUser,
   createUser,
+  updateUserById,
 };

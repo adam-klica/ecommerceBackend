@@ -139,6 +139,12 @@ const productsSchema = mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    createdBy: {
+      type: ObjectId,
+      ref: "User",
+      required: false,
+      index: true,
+    },
     sellCount: {
       type: Number,
       default: 0,

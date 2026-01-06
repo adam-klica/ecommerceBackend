@@ -5,17 +5,18 @@ const {
   updateOrderStatus,
   getSingleOrder,
 } = require("../controller/order.controller");
+const verifyAdminToken = require("../middleware/verifyAdminToken");
 
 // router
 const router = express.Router();
 
 // get orders
-router.get("/orders", getOrders);
+router.get("/orders", verifyAdminToken, getOrders);
 // single order
-router.get("/:id", getSingleOrder);
+router.get("/:id", verifyAdminToken, getSingleOrder);
 // save Order (no payment needed - all products are free)
 router.post("/saveOrder", addOrder);
 // update status
-router.patch("/update-status/:id", updateOrderStatus);
+router.patch("/update-status/:id", verifyAdminToken, updateOrderStatus);
 
 module.exports = router;

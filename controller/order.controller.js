@@ -221,7 +221,6 @@ exports.updateOrderAdmin = async (req, res, next) => {
       status,
       carrier,
       trackingNumber,
-      trackingUrl,
       adminNote,
       shippedAt,
       deliveredAt,
@@ -258,8 +257,6 @@ exports.updateOrderAdmin = async (req, res, next) => {
     if (carrier !== undefined) update.carrier = carrier || undefined;
     if (trackingNumber !== undefined)
       update.trackingNumber = trackingNumber || undefined;
-    if (trackingUrl !== undefined)
-      update.trackingUrl = trackingUrl || undefined;
     if (adminNote !== undefined) update.adminNote = adminNote || undefined;
 
     if (shippedAt !== undefined)

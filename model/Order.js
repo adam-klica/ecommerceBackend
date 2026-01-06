@@ -92,10 +92,6 @@ const orderSchema = new mongoose.Schema(
       type: String,
       required: false,
     },
-    trackingUrl: {
-      type: String,
-      required: false,
-    },
     shippedAt: {
       type: Date,
       required: false,

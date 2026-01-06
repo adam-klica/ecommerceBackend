@@ -75,8 +75,8 @@ module.exports = ({ res, order }) => {
     doc.text(String(idx + 1), col1, y);
     doc.text(title, col2, y, { width: 220 });
     doc.text(String(qty), col3, y, { width: 60, align: "right" });
-    doc.text(price.toFixed(2), col4, y, { width: 60, align: "right" });
-    doc.text(amount.toFixed(2), col5, y, { width: 70, align: "right" });
+    doc.text(`€${price.toFixed(2)}`, col4, y, { width: 60, align: "right" });
+    doc.text(`€${amount.toFixed(2)}`, col5, y, { width: 70, align: "right" });
 
     y += 18;
     if (y > 720) {
@@ -104,15 +104,15 @@ module.exports = ({ res, order }) => {
   });
 
   doc.text("Shipping:", 330, totalsTop + 16);
-  doc.text(shipping.toFixed(2), 520, totalsTop + 16, { align: "right" });
+  doc.text(`€${shipping.toFixed(2)}`, 520, totalsTop + 16, { align: "right" });
 
   doc.text("Discount:", 330, totalsTop + 32);
-  doc.text(discount.toFixed(2), 520, totalsTop + 32, { align: "right" });
+  doc.text(`-€${discount.toFixed(2)}`, 520, totalsTop + 32, { align: "right" });
 
   doc.fontSize(12).text("Total:", 330, totalsTop + 52);
   doc
     .fontSize(12)
-    .text(total.toFixed(2), 520, totalsTop + 52, { align: "right" });
+    .text(`€${total.toFixed(2)}`, 520, totalsTop + 52, { align: "right" });
 
   doc.moveDown(2);
   doc

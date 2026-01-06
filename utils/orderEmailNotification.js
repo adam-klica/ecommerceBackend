@@ -41,6 +41,12 @@ const sendOrderEmailToBuyer = async (order) => {
           <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">${
             item.orderQuantity || 1
           }</td>
+          <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">€${(
+            item.price || 0
+          ).toFixed(2)}</td>
+          <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">€${(
+            (item.price || 0) * (item.orderQuantity || 1)
+          ).toFixed(2)}</td>
         </tr>
       `
       )
@@ -62,6 +68,9 @@ const sendOrderEmailToBuyer = async (order) => {
               order.createdAt
             ).toLocaleDateString()}</p>
             <p><strong>Status:</strong> ${order.status || "Pending"}</p>
+            <p><strong>Payment Method:</strong> ${
+              order.paymentMethod || "Cash on Delivery"
+            }</p>
           </div>
           
           <h3 style="color: #2c3e50;">Order Items:</h3>
@@ -69,13 +78,34 @@ const sendOrderEmailToBuyer = async (order) => {
             <thead>
               <tr style="background: #f8f9fa;">
                 <th style="padding: 10px; text-align: left;">Product</th>
-                <th style="padding: 10px; text-align: center;">Quantity</th>
+                <th style="padding: 10px; text-align: center;">Qty</th>
+                <th style="padding: 10px; text-align: right;">Price</th>
+                <th style="padding: 10px; text-align: right;">Amount</th>
               </tr>
             </thead>
             <tbody>
               ${cartItemsHtml}
             </tbody>
           </table>
+          
+          <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; text-align: right;">
+            <p><strong>Subtotal:</strong> €${(order.subTotal || 0).toFixed(
+              2
+            )}</p>
+            <p><strong>Shipping:</strong> €${(order.shippingCost || 0).toFixed(
+              2
+            )}</p>
+            <p><strong>Discount:</strong> -€${(order.discount || 0).toFixed(
+              2
+            )}</p>
+            <p style="font-size: 18px; color: #2c3e50;"><strong>Total:</strong> €${(
+              order.totalAmount || 0
+            ).toFixed(2)}</p>
+          </div>
+          
+          <div style="margin-top: 20px; padding: 15px; background: #fff3cd; border-radius: 8px;">
+            <p style="margin: 0; color: #856404;"><strong>Payment:</strong> Cash on Delivery - You will pay when the product arrives.</p>
+          </div>
           
           <div style="margin-top: 20px; padding: 15px; background: #e8f4f8; border-radius: 8px;">
             <p><strong>Shipping Address:</strong></p>
@@ -120,10 +150,22 @@ const sendOrderEmailToSeller = async (seller, order, sellerItems) => {
           <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">${
             item.orderQuantity || 1
           }</td>
+          <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">€${(
+            item.price || 0
+          ).toFixed(2)}</td>
+          <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">€${(
+            (item.price || 0) * (item.orderQuantity || 1)
+          ).toFixed(2)}</td>
         </tr>
       `
       )
       .join("");
+
+    // Calculate seller's items total
+    const sellerTotal = sellerItems.reduce(
+      (acc, item) => acc + (item.price || 0) * (item.orderQuantity || 1),
+      0
+    );
 
     const mailOptions = {
       from: `"South Adriatic Market" <${secret.email_user}>`,
@@ -142,6 +184,9 @@ const sendOrderEmailToSeller = async (seller, order, sellerItems) => {
             ).toLocaleDateString()}</p>
             <p><strong>Customer:</strong> ${order.name}</p>
             <p><strong>Customer Email:</strong> ${order.email}</p>
+            <p><strong>Payment Method:</strong> ${
+              order.paymentMethod || "Cash on Delivery"
+            }</p>
           </div>
           
           <h3 style="color: #2c3e50;">Your Products in this Order:</h3>
@@ -149,13 +194,21 @@ const sendOrderEmailToSeller = async (seller, order, sellerItems) => {
             <thead>
               <tr style="background: #f8f9fa;">
                 <th style="padding: 10px; text-align: left;">Product</th>
-                <th style="padding: 10px; text-align: center;">Quantity</th>
+                <th style="padding: 10px; text-align: center;">Qty</th>
+                <th style="padding: 10px; text-align: right;">Price</th>
+                <th style="padding: 10px; text-align: right;">Amount</th>
               </tr>
             </thead>
             <tbody>
               ${cartItemsHtml}
             </tbody>
           </table>
+          
+          <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; text-align: right;">
+            <p style="font-size: 18px; color: #2c3e50;"><strong>Your Total:</strong> €${sellerTotal.toFixed(
+              2
+            )}</p>
+          </div>
           
           <div style="margin-top: 20px; padding: 15px; background: #e8f4f8; border-radius: 8px;">
             <p><strong>Shipping Address:</strong></p>

@@ -3,32 +3,21 @@ const Order = require("../model/Order");
 const orderInvoicePdf = require("../utils/orderInvoicePdf");
 const { sendOrderNotifications } = require("../utils/orderEmailNotification");
 
-// Note: Payment intent removed - all products are free
-// addOrder - All products are now free
+// addOrder - Cash on Delivery (no online payment required)
 exports.addOrder = async (req, res, next) => {
   try {
-    const Product = require("../model/Products");
+    // Keep original prices for display in emails and PDFs
+    // Payment is collected on delivery (Cash on Delivery)
 
-    // Make all products free - set prices to 0
-    if (req.body.cart && Array.isArray(req.body.cart)) {
-      req.body.cart = req.body.cart.map((item) => ({
-        ...item,
-        price: 0,
-      }));
-    }
-
-    // Set all costs to 0 (all products are free)
-    req.body.subTotal = 0;
+    // Set shipping cost to 0 (free shipping)
     req.body.shippingCost = 0;
-    req.body.discount = 0;
-    req.body.totalAmount = 0;
 
-    // Payment method defaults to "free" since all products are free
+    // Payment method defaults to "Cash on Delivery"
     if (!req.body.paymentMethod) {
-      req.body.paymentMethod = "free";
+      req.body.paymentMethod = "Cash on Delivery";
     }
 
-    // User is optional for free orders
+    // User is optional for guest checkout
     // If no user provided, order can still be created
 
     const orderItems = await Order.create(req.body);

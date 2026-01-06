@@ -1,6 +1,7 @@
 const { secret } = require("../config/secret");
 const Order = require("../model/Order");
 const orderInvoicePdf = require("../utils/orderInvoicePdf");
+const { sendOrderNotifications } = require("../utils/orderEmailNotification");
 
 // Note: Payment intent removed - all products are free
 // addOrder - All products are now free
@@ -31,6 +32,11 @@ exports.addOrder = async (req, res, next) => {
     // If no user provided, order can still be created
 
     const orderItems = await Order.create(req.body);
+
+    // Send email notifications to buyer and seller(s) - don't await to avoid blocking response
+    sendOrderNotifications(orderItems).catch((err) => {
+      console.error("Failed to send order notifications:", err.message);
+    });
 
     res.status(200).json({
       success: true,

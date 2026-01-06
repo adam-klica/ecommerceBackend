@@ -181,3 +181,104 @@ exports.updateOrderStatus = async (req, res, next) => {
     next(error);
   }
 };
+
+// update order (admin/seller): status + tracking + admin note
+exports.updateOrderAdmin = async (req, res, next) => {
+  try {
+    const validStatuses = ["pending", "processing", "delivered", "cancel"];
+
+    const orderItem = await Order.findById(req.params.id).select(
+      "cart shippedAt deliveredAt"
+    );
+    if (!orderItem) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
+    }
+
+    if (req.user?.role?.toLowerCase() === "seller") {
+      const Product = require("../model/Products");
+      const myProductIds = await Product.find({
+        createdBy: req.user.id,
+      }).distinct("_id");
+      const hasMyItems = Array.isArray(orderItem?.cart)
+        ? orderItem.cart.some((item) =>
+            myProductIds.some(
+              (pid) => pid?.toString() === item?._id?.toString()
+            )
+          )
+        : false;
+      if (!hasMyItems) {
+        return res.status(403).json({
+          status: "fail",
+          error: "You are not authorized to update this order.",
+        });
+      }
+    }
+
+    const {
+      status,
+      carrier,
+      trackingNumber,
+      trackingUrl,
+      adminNote,
+      shippedAt,
+      deliveredAt,
+    } = req.body || {};
+
+    const update = {};
+
+    if (status !== undefined) {
+      const normalizedStatus = String(status).toLowerCase();
+      if (!validStatuses.includes(normalizedStatus)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid status",
+        });
+      }
+      update.status = normalizedStatus;
+
+      if (
+        normalizedStatus === "processing" &&
+        !orderItem.shippedAt &&
+        shippedAt === undefined
+      ) {
+        update.shippedAt = new Date();
+      }
+      if (
+        normalizedStatus === "delivered" &&
+        !orderItem.deliveredAt &&
+        deliveredAt === undefined
+      ) {
+        update.deliveredAt = new Date();
+      }
+    }
+
+    if (carrier !== undefined) update.carrier = carrier || undefined;
+    if (trackingNumber !== undefined)
+      update.trackingNumber = trackingNumber || undefined;
+    if (trackingUrl !== undefined)
+      update.trackingUrl = trackingUrl || undefined;
+    if (adminNote !== undefined) update.adminNote = adminNote || undefined;
+
+    if (shippedAt !== undefined)
+      update.shippedAt = shippedAt ? new Date(shippedAt) : undefined;
+    if (deliveredAt !== undefined)
+      update.deliveredAt = deliveredAt ? new Date(deliveredAt) : undefined;
+
+    const saved = await Order.findByIdAndUpdate(
+      req.params.id,
+      { $set: update },
+      { new: true }
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Order updated successfully",
+      data: saved,
+    });
+  } catch (error) {
+    next(error);
+  }
+};

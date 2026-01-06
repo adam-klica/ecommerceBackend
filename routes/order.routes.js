@@ -5,6 +5,7 @@ const {
   updateOrderStatus,
   getSingleOrder,
   exportOrderPdf,
+  updateOrderAdmin,
 } = require("../controller/order.controller");
 const verifyAdminToken = require("../middleware/verifyAdminToken");
 
@@ -17,6 +18,8 @@ router.get("/orders", verifyAdminToken, getOrders);
 router.get("/:id/pdf", verifyAdminToken, exportOrderPdf);
 // single order
 router.get("/:id", verifyAdminToken, getSingleOrder);
+// unified order update (status/tracking/notes)
+router.patch("/:id", verifyAdminToken, updateOrderAdmin);
 // save Order (no payment needed - all products are free)
 router.post("/saveOrder", addOrder);
 // update status

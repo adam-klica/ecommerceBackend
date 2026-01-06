@@ -103,7 +103,7 @@ module.exports.getOrderByUser = async (req, res, next) => {
   }
 };
 
-// getOrderById
+// getOrderById (authenticated - for registered users)
 module.exports.getOrderById = async (req, res, next) => {
   try {
     const order = await Order.findById(req.params.id);
@@ -126,7 +126,28 @@ module.exports.getOrderById = async (req, res, next) => {
   }
 };
 
-// export user order invoice as PDF (buyer only)
+// getOrderByIdPublic (no auth required - for guest checkout)
+module.exports.getOrderByIdPublic = async (req, res, next) => {
+  try {
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      order,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// export user order invoice as PDF (buyer only - authenticated)
 module.exports.exportUserOrderPdf = async (req, res, next) => {
   try {
     const order = await Order.findById(req.params.id);
@@ -135,6 +156,22 @@ module.exports.exportUserOrderPdf = async (req, res, next) => {
       return res.status(403).json({
         success: false,
         message: "You are not authorized to access this order",
+      });
+    }
+    return orderInvoicePdf({ res, order });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// export order invoice as PDF (public - for guest checkout)
+module.exports.exportOrderPdfPublic = async (req, res, next) => {
+  try {
+    const order = await Order.findById(req.params.id);
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
       });
     }
     return orderInvoicePdf({ res, order });

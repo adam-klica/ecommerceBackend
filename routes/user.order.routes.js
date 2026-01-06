@@ -18,7 +18,11 @@ router.get(
   userOrderController.getDashboardRecentOrder
 );
 
-//get a order by id
+// public routes (no auth required - for guest checkout)
+router.get("/public/:id/pdf", userOrderController.exportOrderPdfPublic);
+router.get("/public/:id", userOrderController.getOrderByIdPublic);
+
+//get a order by id (authenticated)
 router.get("/:id/pdf", verifyToken, userOrderController.exportUserOrderPdf);
 router.get("/:id", verifyToken, userOrderController.getOrderById);
 

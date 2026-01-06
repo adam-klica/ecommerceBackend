@@ -1,5 +1,6 @@
 const { secret } = require("../config/secret");
 const Order = require("../model/Order");
+const orderInvoicePdf = require("../utils/orderInvoicePdf");
 
 // Note: Payment intent removed - all products are free
 // addOrder - All products are now free
@@ -94,6 +95,45 @@ exports.getSingleOrder = async (req, res, next) => {
     res.status(200).json(orderItem);
   } catch (error) {
     console.log(error);
+    next(error);
+  }
+};
+
+// export order invoice as PDF (admin/seller)
+exports.exportOrderPdf = async (req, res, next) => {
+  try {
+    const orderItem = await Order.findById(req.params.id).populate("user");
+
+    if (req.user?.role?.toLowerCase() === "seller") {
+      const Product = require("../model/Products");
+      const myProductIds = await Product.find({
+        createdBy: req.user.id,
+      }).distinct("_id");
+      const hasMyItems = Array.isArray(orderItem?.cart)
+        ? orderItem.cart.some((item) =>
+            myProductIds.some(
+              (pid) => pid?.toString() === item?._id?.toString()
+            )
+          )
+        : false;
+
+      if (!orderItem || !hasMyItems) {
+        return res.status(403).json({
+          status: "fail",
+          error: "You are not authorized to access this order.",
+        });
+      }
+    }
+
+    if (!orderItem) {
+      return res.status(404).json({
+        status: false,
+        message: "Order not found",
+      });
+    }
+
+    return orderInvoicePdf({ res, order: orderItem });
+  } catch (error) {
     next(error);
   }
 };

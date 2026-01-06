@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const Order = require("../model/Order");
+const orderInvoicePdf = require("../utils/orderInvoicePdf");
 const dayjs = require("dayjs");
 const customParseFormat = require("dayjs/plugin/customParseFormat");
 const isToday = require("dayjs/plugin/isToday");
@@ -15,7 +16,7 @@ dayjs.extend(isSameOrBefore);
 dayjs.extend(isSameOrAfter);
 
 // get all orders user
-module.exports.getOrderByUser = async (req, res,next) => {
+module.exports.getOrderByUser = async (req, res, next) => {
   // console.log(req.user)
   try {
     const { page, limit } = req.query;
@@ -98,25 +99,52 @@ module.exports.getOrderByUser = async (req, res,next) => {
       totalDoc,
     });
   } catch (error) {
-    next(error)
+    next(error);
   }
 };
 
 // getOrderById
-module.exports.getOrderById = async (req, res,next) => {
+module.exports.getOrderById = async (req, res, next) => {
   try {
     const order = await Order.findById(req.params.id);
+
+    // buyer can only access own order
+    const userId = req.user?._id;
+    if (!order || !order.user || order.user.toString() !== userId?.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: "You are not authorized to access this order",
+      });
+    }
+
     res.status(200).json({
       success: true,
       order,
     });
   } catch (error) {
-    next(error)
+    next(error);
+  }
+};
+
+// export user order invoice as PDF (buyer only)
+module.exports.exportUserOrderPdf = async (req, res, next) => {
+  try {
+    const order = await Order.findById(req.params.id);
+    const userId = req.user?._id;
+    if (!order || !order.user || order.user.toString() !== userId?.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: "You are not authorized to access this order",
+      });
+    }
+    return orderInvoicePdf({ res, order });
+  } catch (error) {
+    next(error);
   }
 };
 
 // getDashboardAmount
-exports.getDashboardAmount = async (req, res,next) => {
+exports.getDashboardAmount = async (req, res, next) => {
   try {
     const todayStart = dayjs().startOf("day");
     const todayEnd = dayjs().endOf("day");
@@ -190,11 +218,11 @@ exports.getDashboardAmount = async (req, res,next) => {
       yesterDayCashPaymentAmount,
     });
   } catch (error) {
-    next(error)
+    next(error);
   }
 };
 // get sales report
-exports.getSalesReport = async (req, res,next) => {
+exports.getSalesReport = async (req, res, next) => {
   try {
     const startOfWeek = new Date();
     startOfWeek.setDate(startOfWeek.getDate() - 7);
@@ -223,12 +251,12 @@ exports.getSalesReport = async (req, res,next) => {
     res.status(200).json({ salesReport: salesReportData });
   } catch (error) {
     // Handle error if any
-    next(error)
+    next(error);
   }
 };
 
 // Most Selling Category
-exports.mostSellingCategory = async (req, res,next) => {
+exports.mostSellingCategory = async (req, res, next) => {
   try {
     const categoryData = await Order.aggregate([
       {
@@ -250,12 +278,12 @@ exports.mostSellingCategory = async (req, res,next) => {
 
     res.status(200).json({ categoryData });
   } catch (error) {
-    next(error)
+    next(error);
   }
 };
 
 // dashboard recent order
-exports.getDashboardRecentOrder = async (req, res,next) => {
+exports.getDashboardRecentOrder = async (req, res, next) => {
   try {
     const { page, limit } = req.query;
 
@@ -281,7 +309,7 @@ exports.getDashboardRecentOrder = async (req, res,next) => {
           name: 1,
           user: 1,
           totalAmount: 1,
-          status:1,
+          status: 1,
         },
       },
     ]);
@@ -293,6 +321,6 @@ exports.getDashboardRecentOrder = async (req, res,next) => {
       totalOrder: totalDoc,
     });
   } catch (error) {
-    next(error)
+    next(error);
   }
 };

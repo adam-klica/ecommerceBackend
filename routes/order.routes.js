@@ -4,6 +4,7 @@ const {
   getOrders,
   updateOrderStatus,
   getSingleOrder,
+  exportOrderPdf,
 } = require("../controller/order.controller");
 const verifyAdminToken = require("../middleware/verifyAdminToken");
 
@@ -12,6 +13,8 @@ const router = express.Router();
 
 // get orders
 router.get("/orders", verifyAdminToken, getOrders);
+// export order invoice PDF
+router.get("/:id/pdf", verifyAdminToken, exportOrderPdf);
 // single order
 router.get("/:id", verifyAdminToken, getSingleOrder);
 // save Order (no payment needed - all products are free)

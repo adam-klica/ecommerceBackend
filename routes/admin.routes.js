@@ -19,6 +19,7 @@ const {
   deleteUser,
   createUser,
   updateUserById,
+  getCustomerReports,
 } = require("../controller/admin.controller");
 
 //register a staff
@@ -65,5 +66,12 @@ router.get("/users/:id", verifyAdminToken, checkAdminAccess, getUserById);
 router.patch("/users/:id", verifyAdminToken, checkAdminAccess, updateUserById);
 // Delete user
 router.delete("/users/:id", verifyAdminToken, checkAdminAccess, deleteUser);
+
+router.get(
+  "/reports/customers",
+  verifyAdminToken,
+  checkAdminAccess,
+  getCustomerReports
+);
 
 module.exports = router;

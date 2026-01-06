@@ -44,6 +44,158 @@ const registerUser = async (req, res, next) => {
   }
 };
 
+const getCustomerReports = async (req, res, next) => {
+  try {
+    const User = require("../model/User");
+
+    const page = Math.max(parseInt(req.query.page || "1", 10), 1);
+    const limit = Math.min(
+      Math.max(parseInt(req.query.limit || "20", 10), 1),
+      100
+    );
+    const skip = (page - 1) * limit;
+
+    const roleParam = req.query.role
+      ? String(req.query.role).toLowerCase()
+      : "buyer";
+    const validRoles = ["buyer", "seller", "admin"];
+    const userMatch = {};
+
+    if (roleParam !== "all") {
+      userMatch.role = validRoles.includes(roleParam) ? roleParam : "buyer";
+    }
+
+    const startDate = req.query.startDate
+      ? new Date(req.query.startDate)
+      : null;
+    const endDate = req.query.endDate ? new Date(req.query.endDate) : null;
+
+    const dateMatch = {};
+    if (startDate && !isNaN(startDate.getTime())) {
+      dateMatch.$gte = startDate;
+    }
+    if (endDate && !isNaN(endDate.getTime())) {
+      dateMatch.$lte = endDate;
+    }
+
+    const orderCreatedAtMatch = Object.keys(dateMatch).length
+      ? { createdAt: dateMatch }
+      : {};
+    const reviewCreatedAtMatch = Object.keys(dateMatch).length
+      ? { createdAt: dateMatch }
+      : {};
+
+    const result = await User.aggregate([
+      { $match: userMatch },
+      { $sort: { createdAt: -1 } },
+      {
+        $lookup: {
+          from: "orders",
+          let: { userId: "$_id" },
+          pipeline: [
+            {
+              $match: {
+                $expr: { $eq: ["$user", "$$userId"] },
+                ...orderCreatedAtMatch,
+              },
+            },
+            {
+              $project: {
+                totalAmount: 1,
+                createdAt: 1,
+              },
+            },
+          ],
+          as: "orders",
+        },
+      },
+      {
+        $lookup: {
+          from: "reviews",
+          let: { userId: "$_id" },
+          pipeline: [
+            {
+              $match: {
+                $expr: { $eq: ["$userId", "$$userId"] },
+                ...reviewCreatedAtMatch,
+              },
+            },
+            {
+              $project: {
+                createdAt: 1,
+              },
+            },
+          ],
+          as: "reviews",
+        },
+      },
+      {
+        $addFields: {
+          orderCount: { $size: "$orders" },
+          totalSpent: { $ifNull: [{ $sum: "$orders.totalAmount" }, 0] },
+          lastOrderAt: { $max: "$orders.createdAt" },
+          reviewCount: { $size: "$reviews" },
+          lastReviewAt: { $max: "$reviews.createdAt" },
+        },
+      },
+      {
+        $facet: {
+          data: [
+            {
+              $project: {
+                password: 0,
+                orders: 0,
+                reviews: 0,
+              },
+            },
+            { $skip: skip },
+            { $limit: limit },
+          ],
+          summary: [
+            {
+              $group: {
+                _id: null,
+                totalUsers: { $sum: 1 },
+                totalOrders: { $sum: "$orderCount" },
+                totalSpent: { $sum: "$totalSpent" },
+                totalReviews: { $sum: "$reviewCount" },
+              },
+            },
+            {
+              $project: {
+                _id: 0,
+                totalUsers: 1,
+                totalOrders: 1,
+                totalSpent: 1,
+                totalReviews: 1,
+              },
+            },
+          ],
+        },
+      },
+    ]);
+
+    const data = result?.[0]?.data || [];
+    const summary = result?.[0]?.summary?.[0] || {
+      totalUsers: 0,
+      totalOrders: 0,
+      totalSpent: 0,
+      totalReviews: 0,
+    };
+
+    res.status(200).json({
+      status: true,
+      data,
+      summary,
+      page,
+      limit,
+      totalUsers: summary.totalUsers,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 // Update user (for admin) - email/phone/role
 const updateUserById = async (req, res, next) => {
   try {
@@ -538,4 +690,5 @@ module.exports = {
   deleteUser,
   createUser,
   updateUserById,
+  getCustomerReports,
 };

@@ -22,6 +22,7 @@ const uploadRoutes = require("./routes/uploadFile.routes");
 const cloudinaryRoutes = require("./routes/cloudinary.routes");
 const newsRoutes = require("./routes/news.routes");
 const searchRoutes = require("./routes/search.routes");
+const sellerRoutes = require("./routes/seller.routes");
 
 // middleware
 app.use(cors());
@@ -47,6 +48,7 @@ app.use("/api/search", searchRoutes);
 app.use("/api/cloudinary", cloudinaryRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/sellers", sellerRoutes);
 
 app.listen(PORT, () => console.log(`server running on port ${PORT}`));
 

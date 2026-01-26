@@ -309,7 +309,7 @@ exports.confirmForgetPassword = async (req, res, next) => {
       const newPassword = bcrypt.hashSync(password);
       await User.updateOne(
         { confirmationToken: token },
-        { $set: { password: newPassword } }
+        { $set: { password: newPassword, status: "active" } }
       );
 
       user.confirmationToken = undefined;

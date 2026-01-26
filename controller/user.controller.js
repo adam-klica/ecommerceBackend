@@ -403,6 +403,9 @@ exports.updateUser = async (req, res, next) => {
     if (req.body.bio !== undefined) {
       user.bio = req.body.bio;
     }
+    if (req.body.imageURL !== undefined) {
+      user.imageURL = req.body.imageURL;
+    }
 
     // Validate before saving
     try {

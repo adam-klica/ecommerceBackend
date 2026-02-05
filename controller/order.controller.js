@@ -47,11 +47,27 @@ exports.getOrders = async (req, res, next) => {
       const myProductIds = await Product.find({
         createdBy: req.user.id,
       }).distinct("_id");
-      orderItems = await Order.find({
-        "cart._id": { $in: myProductIds },
-      })
+      // Convert ObjectIds to strings for comparison with cart items
+      const myProductIdStrings = myProductIds.map((id) => id.toString());
+      // Find orders where any cart item's _id matches seller's products
+      const allOrders = await Order.find({})
         .populate("user")
         .sort({ createdAt: -1 });
+
+      console.log("Seller debug:", {
+        sellerId: req.user.id,
+        sellerProductCount: myProductIdStrings.length,
+        sellerProductIds: myProductIdStrings.slice(0, 5),
+        totalOrders: allOrders.length,
+        sampleCartIds: allOrders[0]?.cart?.map((item) => item._id).slice(0, 3),
+      });
+
+      // Filter orders that contain at least one of seller's products
+      orderItems = allOrders.filter((order) =>
+        Array.isArray(order.cart) &&
+        order.cart.some((item) => myProductIdStrings.includes(String(item._id)))
+      );
+      console.log("Filtered orders for seller:", orderItems.length);
     } else {
       orderItems = await Order.find({}).populate("user").sort({ createdAt: -1 });
     }

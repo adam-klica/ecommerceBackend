@@ -49,9 +49,11 @@ exports.getOrders = async (req, res, next) => {
       }).distinct("_id");
       orderItems = await Order.find({
         "cart._id": { $in: myProductIds },
-      }).populate("user");
+      })
+        .populate("user")
+        .sort({ createdAt: -1 });
     } else {
-      orderItems = await Order.find({}).populate("user");
+      orderItems = await Order.find({}).populate("user").sort({ createdAt: -1 });
     }
     res.status(200).json({
       success: true,

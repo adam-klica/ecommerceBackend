@@ -65,9 +65,15 @@ const productsSchema = mongoose.Schema(
       required: true,
       trim: true,
     },
+    onDemand: {
+      type: Boolean,
+      default: false,
+    },
     price: {
       type: Number,
-      required: true,
+      required: function () {
+        return !this.onDemand;
+      },
       min: [0, "Product price can't be negative"],
     },
     discount: {
